@@ -1,0 +1,7 @@
+torch
+transformers
+gradio==3.0.3
+datasets
+librosa
+ffmpeg-python
+python-dotenv

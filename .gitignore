@@ -1,0 +1,48 @@
+videos_out/
+results/
+# Python build
+.eggs/
+gradio.egg-info/*
+!gradio.egg-info/requires.txt
+!gradio.egg-info/PKG-INFO
+dist/
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+build/
+
+# JS build
+gradio/templates/frontend
+# Secrets
+.env
+
+# Gradio run artifacts
+*.db
+*.sqlite3
+gradio/launches.json
+flagged/
+# gradio_cached_examples/
+
+# Tests
+.coverage
+coverage.xml
+test.txt
+
+# Demos
+demo/tmp.zip
+demo/files/*.avi
+demo/files/*.mp4
+
+# Etc
+.idea/*
+.DS_Store
+*.bak
+workspace.code-workspace
+*.h5
+.vscode/
+
+# log files
+.pnpm-debug.log
+venv/
+*.db-journal
