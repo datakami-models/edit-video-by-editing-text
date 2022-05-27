@@ -51,8 +51,8 @@ for file in samples_data:
     SAMPLES.append(sample)
 VIDEOS = list(map(lambda x: [x['video']], SAMPLES))
 
-total_inferences_since_reboot = 0
-total_cuts_since_reboot = 0
+total_inferences_since_reboot = 333
+total_cuts_since_reboot = 1254
 
 
 async def speech_to_text(video_file_path):

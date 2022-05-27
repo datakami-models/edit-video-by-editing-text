@@ -1,6 +1,6 @@
 torch
 transformers
-gradio==3.0.3
+gradio==3.0.6
 datasets
 librosa
 ffmpeg-python
