@@ -5,6 +5,8 @@ import ffmpeg
 import os
 from pathlib import Path
 import time
+import aiohttp
+import asyncio
 
 
 # Set true if you're using huggingface inference API API https://huggingface.co/inference-api
@@ -15,7 +17,6 @@ MODEL = "facebook/wav2vec2-base-960h"
 # MODEL = "patrickvonplaten/wav2vec2-large-960h-lv60-self-4-gram"
 if API_BACKEND:
     from dotenv import load_dotenv
-    import requests
     import base64
     import asyncio
     load_dotenv(Path(".env"))
@@ -51,8 +52,8 @@ for file in samples_data:
     SAMPLES.append(sample)
 VIDEOS = list(map(lambda x: [x['video']], SAMPLES))
 
-total_inferences_since_reboot = 333
-total_cuts_since_reboot = 1254
+total_inferences_since_reboot = 415
+total_cuts_since_reboot = 1539
 
 
 async def speech_to_text(video_file_path):
@@ -81,7 +82,7 @@ async def speech_to_text(video_file_path):
             for tries in range(4):
                 print(f'Transcribing from API attempt {tries}')
                 try:
-                    inference_reponse = query_api(audio_memory)
+                    inference_reponse = await query_api(audio_memory)
                     transcription = inference_reponse["text"].lower()
                     timestamps = [[chunk["text"].lower(), chunk["timestamp"][0], chunk["timestamp"][1]]
                                   for chunk in inference_reponse['chunks']]
@@ -185,7 +186,7 @@ def cut_timestamps_to_video(video_in, transcription, text_in, timestamps):
     return (tokens, output_video)
 
 
-def query_api(audio_bytes: bytes):
+async def query_api(audio_bytes: bytes):
     """
     Query for Huggingface Inference API for Automatic Speech Recognition task
     """
@@ -199,11 +200,9 @@ def query_api(audio_bytes: bytes):
         "options": {"use_gpu": False}
     }).encode("utf-8")
 
-    response = requests.request(
-        "POST", API_URL, headers=headers, data=payload)
-    json_reponse = json.loads(response.content.decode("utf-8"))
-    return json_reponse
-
+    async with aiohttp.ClientSession() as session:
+        async with session.post(API_URL, headers=headers, data=payload) as response:
+         return await response.json()
 
 # ---- Gradio Layout -----
 video_in = gr.Video(label="Video file")

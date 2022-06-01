@@ -1,7 +1,8 @@
 torch
 transformers
-gradio==3.0.6
+gradio==3.0.9
 datasets
 librosa
 ffmpeg-python
 python-dotenv
+aiohttp
