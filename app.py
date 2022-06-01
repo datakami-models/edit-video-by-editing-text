@@ -74,6 +74,7 @@ async def speech_to_text(video_file_path):
     except Exception as e:
         raise RuntimeError("Error converting video to audio")
 
+    ping("speech_to_text")
     last_time = time.time()
     if API_BACKEND:
         # Using Inference API https://huggingface.co/inference-api
@@ -124,7 +125,7 @@ async def speech_to_text(video_file_path):
             raise RuntimeError("Error Running inference with local model", e)
 
 
-def cut_timestamps_to_video(video_in, transcription, text_in, timestamps):
+async def cut_timestamps_to_video(video_in, transcription, text_in, timestamps):
     """
     Given original video input, text transcript + timestamps,
     and edit ext cuts video segments into a single video
@@ -182,6 +183,7 @@ def cut_timestamps_to_video(video_in, transcription, text_in, timestamps):
               for token in filtered]
 
     total_cuts_since_reboot += 1
+    ping("video_cuts")
     print("\n\ntotal_cuts_since_reboot: ", total_cuts_since_reboot, "\n\n")
     return (tokens, output_video)
 
@@ -199,10 +201,21 @@ async def query_api(audio_bytes: bytes):
         },
         "options": {"use_gpu": False}
     }).encode("utf-8")
-
     async with aiohttp.ClientSession() as session:
         async with session.post(API_URL, headers=headers, data=payload) as response:
-         return await response.json()
+            return await response.json()
+
+
+def ping(name):
+    url = f'https://huggingface.co/api/telemetry/spaces/radames/edit-video-by-editing-text/{name}'
+    print("ping: ", url)
+
+    async def req():
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                print("pong: ", response.status)
+    asyncio.create_task(req())
+
 
 # ---- Gradio Layout -----
 video_in = gr.Video(label="Video file")
