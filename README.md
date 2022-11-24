@@ -5,6 +5,7 @@ colorFrom: red
 colorTo: gray
 sdk: gradio
 app_file: app.py
+sdk_version: 3.0.9
 pinned: false
 ---
 
