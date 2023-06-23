@@ -63,7 +63,7 @@ async def speech_to_text(video_file_path):
     Using https://huggingface.co/tasks/automatic-speech-recognition pipeline
     """
     global total_inferences_since_reboot
-    if(video_file_path == None):
+    if (video_file_path == None):
         raise ValueError("Error no video input")
 
     video_path = Path(video_file_path)
@@ -84,6 +84,7 @@ async def speech_to_text(video_file_path):
                 print(f'Transcribing from API attempt {tries}')
                 try:
                     inference_reponse = await query_api(audio_memory)
+                    print(inference_reponse)
                     transcription = inference_reponse["text"].lower()
                     timestamps = [[chunk["text"].lower(), chunk["timestamp"][0], chunk["timestamp"][1]]
                                   for chunk in inference_reponse['chunks']]
@@ -92,7 +93,8 @@ async def speech_to_text(video_file_path):
                     print("\n\ntotal_inferences_since_reboot: ",
                           total_inferences_since_reboot, "\n\n")
                     return (transcription, transcription, timestamps)
-                except:
+                except Exception as e:
+                    print(e)
                     if 'error' in inference_reponse and 'estimated_time' in inference_reponse:
                         wait_time = inference_reponse['estimated_time']
                         print("Waiting for model to load....", wait_time)
@@ -134,7 +136,7 @@ async def cut_timestamps_to_video(video_in, transcription, text_in, timestamps):
 
     video_path = Path(video_in)
     video_file_name = video_path.stem
-    if(video_in == None or text_in == None or transcription == None):
+    if (video_in == None or text_in == None or transcription == None):
         raise ValueError("Inputs undefined")
 
     d = Differ()
@@ -150,7 +152,7 @@ async def cut_timestamps_to_video(video_in, transcription, text_in, timestamps):
     # groupping character timestamps so there are less cuts
     idx = 0
     grouped = {}
-    for(a, b) in zip(filtered, timestamps):
+    for (a, b) in zip(filtered, timestamps):
         if a[0] != '-':
             if idx in grouped:
                 grouped[idx].append(b)
@@ -203,7 +205,15 @@ async def query_api(audio_bytes: bytes):
     }).encode("utf-8")
     async with aiohttp.ClientSession() as session:
         async with session.post(API_URL, headers=headers, data=payload) as response:
-            return await response.json()
+            print("API Response: ", response.status)
+            if response.headers['Content-Type'] == 'application/json':
+                return await response.json()
+            elif response.headers['Content-Type'] == 'application/octet-stream':
+                return await response.read()
+            elif response.headers['Content-Type'] == 'text/plain':
+                return await response.text()
+            else:
+                raise RuntimeError("Error Fetching API")
 
 
 def ping(name):
@@ -222,28 +232,26 @@ video_in = gr.Video(label="Video file")
 text_in = gr.Textbox(label="Transcription", lines=10, interactive=True)
 video_out = gr.Video(label="Video Out")
 diff_out = gr.HighlightedText(label="Cuts Diffs", combine_adjacent=True)
-examples = gr.components.Dataset(
-    components=[video_in], samples=VIDEOS, type="index")
+examples = gr.Dataset(components=[video_in], samples=VIDEOS, type="index")
 
-demo = gr.Blocks(enable_queue=True, css='''
+css = """
 #cut_btn, #reset_btn { align-self:stretch; }
 #\\31 3 { max-width: 540px; }
 .output-markdown {max-width: 65ch !important;}
-''')
-demo.encrypt = False
-with demo:
+"""
+with gr.Blocks(css=css) as demo:
     transcription_var = gr.Variable()
     timestamps_var = gr.Variable()
     with gr.Row():
         with gr.Column():
-            gr.Markdown('''
+            gr.Markdown("""
             # Edit Video By Editing Text
             This project is a quick proof of concept of a simple video editor where the edits
             are made by editing the audio transcription.
             Using the [Huggingface Automatic Speech Recognition Pipeline](https://huggingface.co/tasks/automatic-speech-recognition)
             with a fine tuned [Wav2Vec2 model using Connectionist Temporal Classification (CTC)](https://huggingface.co/facebook/wav2vec2-large-960h-lv60-self)
             you can predict not only the text transcription but also the [character or word base timestamps](https://huggingface.co/docs/transformers/v4.19.2/en/main_classes/pipelines#transformers.AutomaticSpeechRecognitionPipeline.__call__.return_timestamps)
-            ''')
+            """)
 
     with gr.Row():
 
@@ -269,9 +277,9 @@ with demo:
                 text_in, transcription_var, timestamps_var])
 
     with gr.Row():
-        gr.Markdown('''
+        gr.Markdown("""
         ### Now edit as text
-        After running the video transcription, you can make cuts to the text below (only cuts, not additions!)''')
+        After running the video transcription, you can make cuts to the text below (only cuts, not additions!)""")
 
     with gr.Row():
         with gr.Column():
@@ -290,13 +298,13 @@ with demo:
             video_out.render()
             diff_out.render()
     with gr.Row():
-        gr.Markdown('''
+        gr.Markdown("""
         #### Video Credits
 
         1. [Cooking](https://vimeo.com/573792389)
         1. [Shia LaBeouf "Just Do It"](https://www.youtube.com/watch?v=n2lTxIk_Dr0)
         1. [Mark Zuckerberg & Yuval Noah Harari in Conversation](https://www.youtube.com/watch?v=Boj9eD0Wug8)
-        ''')
-
+        """)
+demo.queue()
 if __name__ == "__main__":
     demo.launch(debug=True)
