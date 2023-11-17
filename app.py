@@ -240,8 +240,8 @@ css = """
 .output-markdown {max-width: 65ch !important;}
 """
 with gr.Blocks(css=css) as demo:
-    transcription_var = gr.Variable()
-    timestamps_var = gr.Variable()
+    transcription_var = gr.State()
+    timestamps_var = gr.State()
     with gr.Row():
         with gr.Column():
             gr.Markdown("""
