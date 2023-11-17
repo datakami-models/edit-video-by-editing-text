@@ -228,7 +228,7 @@ def ping(name):
 
 
 # ---- Gradio Layout -----
-video_in = gr.Video(label="Video file")
+video_in = gr.Video(label="Video file", elem_id="video-container")
 text_in = gr.Textbox(label="Transcription", lines=10, interactive=True)
 video_out = gr.Video(label="Video Out")
 diff_out = gr.HighlightedText(label="Cuts Diffs", combine_adjacent=True)
@@ -238,78 +238,76 @@ css = """
 #cut_btn, #reset_btn { align-self:stretch; }
 #\\31 3 { max-width: 540px; }
 .output-markdown {max-width: 65ch !important;}
-#container{
-    margin: 0 auto;
+#video-container{
     max-width: 40rem;
 }
 """
 with gr.Blocks(css=css) as demo:
-    with gr.Column(elem_id="container"):
         transcription_var = gr.State()
-        timestamps_var = gr.State()
-        with gr.Row():
-            with gr.Column():
-                gr.Markdown("""
-                # Edit Video By Editing Text
-                This project is a quick proof of concept of a simple video editor where the edits
-                are made by editing the audio transcription.
-                Using the [Huggingface Automatic Speech Recognition Pipeline](https://huggingface.co/tasks/automatic-speech-recognition)
-                with a fine tuned [Wav2Vec2 model using Connectionist Temporal Classification (CTC)](https://huggingface.co/facebook/wav2vec2-large-960h-lv60-self)
-                you can predict not only the text transcription but also the [character or word base timestamps](https://huggingface.co/docs/transformers/v4.19.2/en/main_classes/pipelines#transformers.AutomaticSpeechRecognitionPipeline.__call__.return_timestamps)
-                """)
-    
-        with gr.Row():
-    
-            examples.render()
-    
-            def load_example(id):
-                video = SAMPLES[id]['video']
-                transcription = SAMPLES[id]['transcription'].lower()
-                timestamps = SAMPLES[id]['timestamps']
-    
-                return (video, transcription, transcription, timestamps)
-    
-            examples.click(
-                load_example,
-                inputs=[examples],
-                outputs=[video_in, text_in, transcription_var, timestamps_var],
-                queue=False)
-        with gr.Row():
-            with gr.Column():
-                video_in.render()
-                transcribe_btn = gr.Button("Transcribe Audio")
-                transcribe_btn.click(speech_to_text, [video_in], [
-                    text_in, transcription_var, timestamps_var])
-    
-        with gr.Row():
+    timestamps_var = gr.State()
+    with gr.Row():
+        with gr.Column():
             gr.Markdown("""
-            ### Now edit as text
-            After running the video transcription, you can make cuts to the text below (only cuts, not additions!)""")
-    
-        with gr.Row():
-            with gr.Column():
-                text_in.render()
-                with gr.Row():
-                    cut_btn = gr.Button("Cut to video", elem_id="cut_btn")
-                    # send audio path and hidden variables
-                    cut_btn.click(cut_timestamps_to_video, [
-                        video_in, transcription_var, text_in, timestamps_var], [diff_out, video_out])
-    
-                    reset_transcription = gr.Button(
-                        "Reset to last trascription", elem_id="reset_btn")
-                    reset_transcription.click(
-                        lambda x: x, transcription_var, text_in)
-            with gr.Column():
-                video_out.render()
-                diff_out.render()
-        with gr.Row():
-            gr.Markdown("""
-            #### Video Credits
-    
-            1. [Cooking](https://vimeo.com/573792389)
-            1. [Shia LaBeouf "Just Do It"](https://www.youtube.com/watch?v=n2lTxIk_Dr0)
-            1. [Mark Zuckerberg & Yuval Noah Harari in Conversation](https://www.youtube.com/watch?v=Boj9eD0Wug8)
+            # Edit Video By Editing Text
+            This project is a quick proof of concept of a simple video editor where the edits
+            are made by editing the audio transcription.
+            Using the [Huggingface Automatic Speech Recognition Pipeline](https://huggingface.co/tasks/automatic-speech-recognition)
+            with a fine tuned [Wav2Vec2 model using Connectionist Temporal Classification (CTC)](https://huggingface.co/facebook/wav2vec2-large-960h-lv60-self)
+            you can predict not only the text transcription but also the [character or word base timestamps](https://huggingface.co/docs/transformers/v4.19.2/en/main_classes/pipelines#transformers.AutomaticSpeechRecognitionPipeline.__call__.return_timestamps)
             """)
+
+    with gr.Row():
+
+        examples.render()
+
+        def load_example(id):
+            video = SAMPLES[id]['video']
+            transcription = SAMPLES[id]['transcription'].lower()
+            timestamps = SAMPLES[id]['timestamps']
+
+            return (video, transcription, transcription, timestamps)
+
+        examples.click(
+            load_example,
+            inputs=[examples],
+            outputs=[video_in, text_in, transcription_var, timestamps_var],
+            queue=False)
+    with gr.Row():
+        with gr.Column():
+            video_in.render()
+            transcribe_btn = gr.Button("Transcribe Audio")
+            transcribe_btn.click(speech_to_text, [video_in], [
+                text_in, transcription_var, timestamps_var])
+
+    with gr.Row():
+        gr.Markdown("""
+        ### Now edit as text
+        After running the video transcription, you can make cuts to the text below (only cuts, not additions!)""")
+
+    with gr.Row():
+        with gr.Column():
+            text_in.render()
+            with gr.Row():
+                cut_btn = gr.Button("Cut to video", elem_id="cut_btn")
+                # send audio path and hidden variables
+                cut_btn.click(cut_timestamps_to_video, [
+                    video_in, transcription_var, text_in, timestamps_var], [diff_out, video_out])
+
+                reset_transcription = gr.Button(
+                    "Reset to last trascription", elem_id="reset_btn")
+                reset_transcription.click(
+                    lambda x: x, transcription_var, text_in)
+        with gr.Column():
+            video_out.render()
+            diff_out.render()
+    with gr.Row():
+        gr.Markdown("""
+        #### Video Credits
+
+        1. [Cooking](https://vimeo.com/573792389)
+        1. [Shia LaBeouf "Just Do It"](https://www.youtube.com/watch?v=n2lTxIk_Dr0)
+        1. [Mark Zuckerberg & Yuval Noah Harari in Conversation](https://www.youtube.com/watch?v=Boj9eD0Wug8)
+        """)
 demo.queue()
 if __name__ == "__main__":
     demo.launch(debug=True)
