@@ -243,7 +243,7 @@ css = """
 }
 """
 with gr.Blocks(css=css) as demo:
-        transcription_var = gr.State()
+    transcription_var = gr.State()
     timestamps_var = gr.State()
     with gr.Row():
         with gr.Column():
