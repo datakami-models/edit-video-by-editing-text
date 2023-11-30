@@ -1,5 +1,7 @@
 videos_out/
 results/
+models/
+
 # Python build
 .eggs/
 gradio.egg-info/*
