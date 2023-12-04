@@ -31,3 +31,7 @@ build:
 
 # predict.py defines how predictions are run on your model
 predict: "predict.py:Predictor"
+
+# The name given to built Docker images. 
+# If you want to push to a registry, this should also include the registry name.
+image: "r8.im/jd7h/edit-video-by-editing-text"
